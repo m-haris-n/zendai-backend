@@ -167,10 +167,13 @@ async def login(
     )
 
     if not user:
+        print("not user")
         raise UNAUTHORIZED
 
     if user:
         if not pwd_context.verify(form_data.password, user.hashed_pw):
+            print("pw not matched")
+
             raise UNAUTHORIZED
 
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
@@ -241,7 +244,10 @@ async def create_chat(
 ):
     response_array = []
     user_chats = (
-        db.query(models.Chats).filter(models.Chats.uid == curr_user["id"]).all()
+        db.query(models.Chats)
+        .filter(models.Chats.uid == curr_user["id"])
+        .order_by(models.Chats.created_at.desc())
+        .all()
     )
 
     for chat in user_chats:
