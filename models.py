@@ -29,6 +29,7 @@ class Users(Base):
     subdomain = Column(String, unique=True, index=True)
     apikey = Column(String, unique=True, index=True)
     created_at = Column(TIMESTAMP, default=datetime.datetime.utcnow)
+    tries = Column(Integer, default=3)
 
 
 class Chats(Base):

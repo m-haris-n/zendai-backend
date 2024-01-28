@@ -7,6 +7,7 @@ import models
 from database import engine, SessionLocal
 from sqlalchemy.orm import Session
 
+import time
 from datetime import datetime, timedelta
 from jose import JWTError, jwt
 from passlib.context import CryptContext
@@ -96,9 +97,16 @@ async def get_current_user(db: db_dependency, token: str = Depends(oauth_2_schem
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         username: str = payload.get("sub")
+        expires = payload.get("exp")
         if username is None:
             raise UNAUTHORIZED
 
+        if expires is None:
+            raise UNAUTHORIZED
+
+        if time.mktime(datetime.now().timetuple()) > expires:
+            # print("expired")
+            raise UNAUTHORIZED
         token_data = TokenData(username=username)
 
     except JWTError:
@@ -167,12 +175,12 @@ async def login(
     )
 
     if not user:
-        print("not user")
+        # print("not user")
         raise UNAUTHORIZED
 
     if user:
         if not pwd_context.verify(form_data.password, user.hashed_pw):
-            print("pw not matched")
+            # print("pw not matched")
 
             raise UNAUTHORIZED
 
@@ -199,7 +207,7 @@ async def edit_current_user(
     db: db_dependency,
     curr_user: UserBase = Depends(get_current_user),
 ):
-    print(curr_user)
+    # print(curr_user)
     if creds.apikey != None:
         user = db.query(models.Users).filter(models.Users.id == curr_user["id"]).first()
         (
@@ -217,8 +225,8 @@ async def edit_current_user(
 
     db.commit()
     db.refresh(user)
-    print(user)
-    print(type(user))
+    # print(user)
+    # print(type(user))
     userdict = user.__dict__.copy()
     del userdict["hashed_pw"]
     return {"status": status.HTTP_200_OK, "data": userdict}
@@ -316,8 +324,8 @@ async def create_message(
     history = (
         db.query(models.Messages)
         .filter(models.Messages.cid == id)
-        .order_by(models.Messages.created_at)
-        .all()
+        .order_by(models.Messages.created_at.desc())
+        .limit(2)
     )
 
     hist_array = [{"role": x.role, "message": x.message_text} for x in history]
