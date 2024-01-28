@@ -50,7 +50,7 @@ ALGORITHM = os.environ.get("ALGORITHM")
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.environ.get("ACCESS_TOKEN_EXPIRE_MINUTES"))
 ALLOWED_ORIGINS = [
     "http://localhost:5173",
-    "https://zendai-frotend-m-haris-n.vercel.app",
+    "https://zendai-frontend.vercel.app/",
 ]
 
 oauth_2_scheme = OAuth2PasswordBearer(tokenUrl="token")
