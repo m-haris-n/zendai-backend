@@ -326,7 +326,7 @@ async def create_message(
         db.query(models.Messages)
         .filter(models.Messages.cid == id)
         .order_by(models.Messages.created_at.desc())
-        .limit(2)
+        .limit(4)
     )
 
     hist_array = [{"role": x.role, "message": x.message_text} for x in history]
