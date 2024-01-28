@@ -50,7 +50,7 @@ ALGORITHM = os.environ.get("ALGORITHM")
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.environ.get("ACCESS_TOKEN_EXPIRE_MINUTES"))
 ALLOWED_ORIGINS = [
     "http://localhost:5173",
-    "https://zendai-frontend.vercel.app/",
+    "https://zendai-frontend.vercel.app",
 ]
 
 oauth_2_scheme = OAuth2PasswordBearer(tokenUrl="token")
@@ -151,6 +151,7 @@ async def create_user(userinfo: UserCreationBase, db: db_dependency):
         username=userinfo.username,
         email=userinfo.email,
         hashed_pw=pwd_context.hash(userinfo.password),
+        tries=3,
     )
     db.add(user)
     db.commit()
