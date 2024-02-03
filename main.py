@@ -156,6 +156,13 @@ async def create_user(userinfo: UserCreationBase, db: db_dependency):
     db.add(user)
     db.commit()
     db.refresh(user)
+    new_chat = models.Chats(
+        uid=user.id,
+        chatname="Welcome to Zendai!"
+    )
+    db.add(new_chat)
+    db.commit()
+    db.refresh(new_chat)
     return {
         "status": 200,
         "data": {
@@ -199,6 +206,16 @@ async def login(
 
 @app.get("/users/me")
 async def read_current_user(curr_user: UserBase = Depends(get_current_user)):
+    return curr_user
+
+
+@app.delete("/users/me")
+async def read_current_user(
+    db: db_dependency, curr_user: UserBase = Depends(get_current_user)
+):
+    db.query(models.Users).filter(models.Users.id == curr_user["id"]).delete()
+    db.commit()
+
     return curr_user
 
 
