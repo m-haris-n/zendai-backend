@@ -27,8 +27,8 @@ class Users(Base):
     username = Column(String, unique=True, index=True)
     email = Column(String, unique=True, index=True)
     hashed_pw = Column(String)
-    subdomain = Column(String, unique=True, index=True)
-    apikey = Column(String, unique=True, index=True)
+    subdomain = Column(String, index=True)
+    apikey = Column(String, index=True)
     created_at = Column(TIMESTAMP, default=datetime.datetime.utcnow)
     tries = Column(Integer, default=3)
 
