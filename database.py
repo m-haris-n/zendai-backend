@@ -6,7 +6,7 @@ import os
 
 load_dotenv()
 
-URL_DB = os.environ.get("PROD_DB")
+URL_DB = os.environ.get("DB_URL_PROD")
 
 engine = create_engine(URL_DB)
 
