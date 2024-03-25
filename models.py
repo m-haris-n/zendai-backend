@@ -32,18 +32,20 @@ class Users(Base):
     created_at = Column(TIMESTAMP, default=datetime.datetime.utcnow)
     tries = Column(Integer, default=3)
 
-    chats = relationship('Chats', backref='user', cascade='all, delete')
+    chats = relationship("Chats", backref="user", cascade="all, delete")
 
 
 class Chats(Base):
     __tablename__ = "chats"
 
     id = Column(Integer, primary_key=True, index=True)
-    uid = Column(Integer, ForeignKey("users.id"), )
+    uid = Column(
+        Integer,
+        ForeignKey("users.id"),
+    )
     chatname = Column(String)
     created_at = Column(TIMESTAMP, default=datetime.datetime.utcnow)
-    messages = relationship('Messages', backref='chat', cascade='all, delete')
-
+    messages = relationship("Messages", backref="chat", cascade="all, delete")
 
 
 class Messages(Base):

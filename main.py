@@ -13,7 +13,10 @@ from jose import JWTError, jwt
 from passlib.context import CryptContext
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 
-from gpt_handlers import generate_gpt, generate_response, get_ticket_requirement
+from gpt_handlers import (
+    generate_basic_resp,
+    generate_response,
+)
 from zenpy_handlers import get_all_tickets
 
 from utilities.validators import validate_email
@@ -330,7 +333,7 @@ async def create_message(
     if not user_chat.chatname:
         summarymsg = f"Summarize this into a heading: {message.message}"
         summarymsg = str(summarymsg)
-        res = generate_gpt(summarymsg)
+        res = generate_basic_resp(OPENAI_KEY, summarymsg)
         db.query(models.Chats).filter(models.Chats.uid == curr_user["id"]).filter(
             models.Chats.id == id
         ).update({"chatname": res})
@@ -356,9 +359,8 @@ async def create_message(
 
     prompt = f"""
     {message.message}
-    {ticketData}
+    
     """
-    # gptres = generate_gpt(prompt, history=hist_array)
     gptres = generate_response(OPENAI_KEY, message.message, hist_array, ticketData)
 
     if not gptres:
@@ -370,40 +372,3 @@ async def create_message(
     db.refresh(assistant_msg)
 
     return {"response": assistant_msg}
-
-
-# ZENDAI LOGICS
-
-
-@app.get("/gpt")
-async def get_gpt_response():
-    res = generate_gpt(
-        "Hi. You are my assitant. give response in json only, with response in an attribute}"
-    )
-    return json.loads(res)
-
-
-@app.get("/zenpy")
-async def get_all_zenpy_tickets():
-    res = get_all_tickets()
-    return res
-
-
-@app.post("/zengpt")
-async def get_zengpt_response(
-    question: GPTQuestionBase, curr_user: UserBase = Depends(get_current_user)
-):
-    user = curr_user
-    if user["apikey"] is None or user["subdomain"] is None:
-        raise CREDENTIALS_NEEDED
-    ticketData = json.dumps(
-        get_all_tickets(token=user["apikey"], subdomain=user["subdomain"])
-    )
-    ticketreqs = get_ticket_requirement(question.question_text)
-    prompt = f"""
-    {question.question_text}
-    {ticketData}
-    """
-    gptres = generate_gpt(prompt)
-
-    return {"res": gptres, "reqs": json.loads(ticketreqs)}

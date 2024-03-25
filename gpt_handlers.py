@@ -1,11 +1,25 @@
 import os
-import requests, json
 from dotenv import load_dotenv
 
-load_dotenv()
 
-EDEN_API_KEY = os.environ.get("EDEN_AI_API_KEY")
-URL = os.environ.get("GPT_URL")
+from langchain.chains import LLMChain
+from langchain.prompts import PromptTemplate
+from langchain_openai import OpenAI
+
+
+from document import Document
+from langchain_openai import OpenAIEmbeddings
+from langchain_community.vectorstores import Chroma
+from langchain.prompts.chat import (
+    ChatPromptTemplate,
+    HumanMessagePromptTemplate,
+    SystemMessagePromptTemplate,
+)
+from langchain.chains import ConversationalRetrievalChain
+
+from langchain_openai import ChatOpenAI
+
+load_dotenv()
 
 
 MASTER_PROMPT = """
@@ -25,63 +39,49 @@ Query:
 """
 
 
-def generate_gpt(text, history=[]):
-    headers = {"Authorization": f"Bearer {EDEN_API_KEY}"}
+def generate_basic_resp(openai_key, query):
+    # Set up OpenAI connection (replace with your API key)
 
-    payload = {
-        "providers": "openai",
-        "text": text,
-        "chat_global_action": "Follow user instructions",
-        "previous_history": history,
-        "temperature": 0.0,
-        "settings": {"openai": "gpt-3.5-turbo"},
-        "max_tokens": 1000,
-    }
-    response = requests.post(URL, json=payload, headers=headers)
-    try:
-        result = json.loads(response.text)
-        msg = result["openai"]["generated_text"]
-        # print(msg)
-        return msg
-    except Exception as e:
-        return e
+    llm = OpenAI(openai_api_key=openai_key)
 
+    # Define the prompt template
+    template = """Question: {question}
+    Answer:"""
 
-def get_ticket_requirement(text):
-    headers = {"Authorization": f"Bearer {EDEN_API_KEY}"}
+    # Create a PromptTemplate object
+    prompt = PromptTemplate.from_template(template)
 
-    history = []
+    # Combine the prompt and LLM into a chain
+    llm_chain = LLMChain(prompt=prompt, llm=llm)
 
-    payload = {
-        "providers": "openai",
-        "text": MASTER_PROMPT + text,
-        "chat_global_action": "Follow user instructions",
-        "previous_history": history,
-        "temperature": 0.0,
-        "settings": {"openai": "gpt-3.5-turbo"},
-        "max_tokens": 1000,
-    }
-    response = requests.post(URL, json=payload, headers=headers)
-    try:
-        result = json.loads(response.text)
-        msg = result["openai"]["generated_text"]
-        # print(msg)
-        return msg
-    except Exception as e:
-        return e
+    # Define your question
+
+    # Get the answer using the chain
+    response = llm_chain.run(question=query)
+    return response
 
 
-from document import Document
-from langchain_openai import OpenAIEmbeddings
-from langchain_community.vectorstores import Chroma
-from langchain.prompts.chat import (
-    ChatPromptTemplate,
-    HumanMessagePromptTemplate,
-    SystemMessagePromptTemplate,
-)
-from langchain.chains import ConversationalRetrievalChain
+def get_ticket_requirement(openai_key, query):
+    # Set up OpenAI connection (replace with your API key)
 
-from langchain_openai import ChatOpenAI
+    llm = OpenAI(openai_api_key=openai_key)
+
+    # Define the prompt template
+    template = """Question: {question}
+    Answer:"""
+
+    # Create a PromptTemplate object
+    prompt = PromptTemplate.from_template(template)
+
+    # Combine the prompt and LLM into a chain
+    llm_chain = LLMChain(prompt=prompt, llm=llm)
+
+    # Define your question
+    question = MASTER_PROMPT + query
+
+    # Get the answer using the chain
+    response = llm_chain.run(question=question)
+    return response
 
 
 def generate_response(openai_api_key, query_text, chat_history, api_data):
