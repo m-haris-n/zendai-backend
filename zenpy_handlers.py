@@ -7,22 +7,6 @@ import urllib.parse
 
 dotenv.load_dotenv()
 
-SUBDOMAIN = os.environ.get("SUBDOMAIN")
-TOKEN = os.environ.get("API_TOKEN")
-EMAIL = os.environ.get("EMAIL")
-
-zp_client = Zenpy(subdomain=SUBDOMAIN, email=EMAIL, token=TOKEN)
-
-
-START_DATE = "2023-11-12T23:19:00Z"
-END_DATE = "2023-11-12T23:34:03Z"
-
-query = f"query=type:ticket created>{START_DATE} created<{END_DATE}"
-anotherurl = f"https://{SUBDOMAIN}.zendesk.com/api/v2/tickets.json?created>{START_DATE}&created<{END_DATE}"
-asdfURL = (
-    f"https://{SUBDOMAIN}.zendesk.com/api/v2/incremental/tickets?start_time=1099832100"
-)
-
 
 def get_search_url(subdomain, query=""):
     return f"https://{subdomain}.zendesk.com/api/v2/requests/search.json?{query}"
