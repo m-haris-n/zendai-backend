@@ -13,7 +13,7 @@ from jose import JWTError, jwt
 from passlib.context import CryptContext
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 
-from gpt_handlers import generate_gpt, get_ticket_requirement
+from gpt_handlers import generate_gpt, generate_response, get_ticket_requirement
 from zenpy_handlers import get_all_tickets
 
 from utilities.validators import validate_email
@@ -50,6 +50,8 @@ ALLOWED_ORIGINS = [
     "https://zendai-frontend.vercel.app",
     "https://www.getsupportiveapp.com",
 ]
+OPENAI_KEY = os.environ.get("OPENAI_KEY")
+
 
 oauth_2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -154,10 +156,7 @@ async def create_user(userinfo: UserCreationBase, db: db_dependency):
     db.add(user)
     db.commit()
     db.refresh(user)
-    new_chat = models.Chats(
-        uid=user.id,
-        chatname="Welcome to Zendai!"
-    )
+    new_chat = models.Chats(uid=user.id, chatname="Welcome to Zendai!")
     db.add(new_chat)
     db.commit()
     db.refresh(new_chat)
@@ -359,7 +358,8 @@ async def create_message(
     {message.message}
     {ticketData}
     """
-    gptres = generate_gpt(prompt, history=hist_array)
+    # gptres = generate_gpt(prompt, history=hist_array)
+    gptres = generate_response(OPENAI_KEY, message.message, hist_array, ticketData)
 
     if not gptres:
         raise BAD_REQUEST
@@ -369,7 +369,7 @@ async def create_message(
     db.commit()
     db.refresh(assistant_msg)
 
-    return {"response": assistant_msg, "tickets": ticketData}
+    return {"response": assistant_msg}
 
 
 # ZENDAI LOGICS

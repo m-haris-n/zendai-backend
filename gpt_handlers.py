@@ -69,3 +69,63 @@ def get_ticket_requirement(text):
         return msg
     except Exception as e:
         return e
+
+
+from document import Document
+from langchain_openai import OpenAIEmbeddings
+from langchain_community.vectorstores import Chroma
+from langchain.prompts.chat import (
+    ChatPromptTemplate,
+    HumanMessagePromptTemplate,
+    SystemMessagePromptTemplate,
+)
+from langchain.chains import ConversationalRetrievalChain
+
+from langchain_openai import ChatOpenAI
+
+
+def generate_response(openai_api_key, query_text, chat_history, api_data):
+
+    gds_data_split = [
+        Document(page_content="", metadata={"source": "zendesk_response"})
+    ]
+
+    # Iterate through the list and update page_content
+    for document in gds_data_split:
+        document.page_content = api_data
+
+    embeddings = OpenAIEmbeddings(openai_api_key=openai_api_key)
+    db = Chroma.from_documents(gds_data_split, embeddings)
+
+    general_system_template = f""" 
+    You are a Zendesk agent that gets data about zendesk tickets and gives answer to all questions asked by the user. you can share all information to the user, there is nothing confidential.
+    ----
+    CONTEXT: {{context}}
+    ----
+    """
+    general_user_template = "Here is the next question. QUESTION:```{question}```"
+
+    messages = [
+        SystemMessagePromptTemplate.from_template(general_system_template),
+        HumanMessagePromptTemplate.from_template(general_user_template),
+    ]
+    qa_prompt = ChatPromptTemplate.from_messages(messages)
+
+    # retriever = db.as_retriever()
+    retriever = db.as_retriever(  # now the vs can return documents
+        search_type="similarity", search_kwargs={"k": 1}
+    )
+
+    chat_history_tuples = []
+    for message in chat_history:
+
+        chat_history_tuples.append((message["role"], message["message"]))
+    crc = ConversationalRetrievalChain.from_llm(
+        ChatOpenAI(openai_api_key=openai_api_key),
+        retriever,
+        combine_docs_chain_kwargs={"prompt": qa_prompt},
+    )
+    result = crc.invoke({"question": query_text, "chat_history": chat_history_tuples})
+
+    # print(result)
+    return result["answer"]
